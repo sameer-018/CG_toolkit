@@ -8,32 +8,53 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
-  <div class="hgroup">
-    <button id="backBtn" class="back" hidden>&larr; All tools</button>
-    <span class="brand" id="toolTitle">Interactive Graphics Learning Toolkit</span>
+<header class="topbar">
+  <div class="brandwrap">
+    <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><g fill="#fff"><rect x="4" y="4" width="4" height="4" rx="1"/><rect x="10" y="4" width="4" height="4" rx="1"/><rect x="16" y="4" width="4" height="4" rx="1"/><rect x="4" y="10" width="4" height="4" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/><rect x="16" y="10" width="4" height="4" rx="1"/><rect x="4" y="16" width="4" height="4" rx="1"/><rect x="10" y="16" width="4" height="4" rx="1"/><rect x="16" y="16" width="4" height="4" rx="1"/></g></svg></span>
+    <div class="brandtext"><span class="brand">Interactive Graphics Learning Toolkit</span><span class="sub">Computer Graphics / Course Project</span></div>
+  </div>
+  <div class="topright">
+    <div class="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="search" type="search" placeholder="Find a topic or algorithm" autocomplete="off" aria-label="Find a topic or algorithm">
+      <kbd id="kbd">Ctrl K</kbd>
+    </div>
+    <button class="guidebtn" id="guideBtn" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v15H5.5A1.5 1.5 0 0 0 4 20.5zM20 5.5A1.5 1.5 0 0 0 18.5 4H13v15h5.5a1.5 1.5 0 0 1 1.5 1.5z"/></svg>
+      <span>Toolkit guide</span>
+    </button>
   </div>
 </header>
 
+<div class="shell">
+<aside class="sidenav" aria-label="Workspace navigation">
+  <div class="navlabel">Workspace</div>
+  <button class="navitem" id="navHome" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg><span>Explore topics</span></button>
+  <button class="navitem" id="navPlay" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M8 10l3 2.5L8 15M13 15h3.5"/></svg><span>Algorithm playground</span></button>
+  <button class="navitem" id="navCompare" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M12 4.5v15"/></svg><span>Compare algorithms</span></button>
+  <div class="navlabel idxlabel">Topic index</div>
+  <nav id="topicIndex" class="topicindex" aria-label="Topic index"></nav>
+</aside>
+
 <main>
+  <nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav>
+
   <!-- 0. HOME -->
   <section id="home">
-    <div class="hero">
-      <span class="kicker">Computer Graphics &middot; Course Project</span>
-      <h1>Interactive Graphics<br>Learning Toolkit</h1>
-      <p class="lede">Pick a topic below. Every drawing on every page is rasterized pixel by pixel — nothing here uses the canvas's built-in shape tools.</p>
+    <h1 class="display">Understand graphics, pixel by pixel.</h1>
+    <p class="lede">Pick a topic below. Every drawing on every page is rasterized pixel by pixel &mdash; nothing here uses the canvas's built-in shape tools.</p>
+    <div class="filters">
+      <div class="chips" id="chips" role="group" aria-label="Filter topics"></div>
+      <span class="count" id="count"></span>
     </div>
-    <div class="grid">
-      <button class="card" data-view="viz" data-mode="dda"><span class="badge">DDA</span><span class="title">DDA Line</span><span class="desc">Digital Differential Analyzer, step by step</span></button>
-      <button class="card" data-view="viz" data-mode="bres"><span class="badge">BR</span><span class="title">Bresenham Line</span><span class="desc">Integer-only line drawing, step by step</span></button>
-      <button class="card" data-view="viz" data-mode="compare"><span class="badge">VS</span><span class="title">DDA vs Bresenham</span><span class="desc">Same line, both algorithms, pixel-for-pixel</span></button>
-      <button class="card" data-view="viz" data-mode="circle"><span class="badge">MC</span><span class="title">Midpoint Circle</span><span class="desc">8-way symmetry, one octant computed</span></button>
-      <button class="card" data-view="viz" data-mode="fill"><span class="badge">FL</span><span class="title">Area Fill</span><span class="desc">Flood fill vs boundary fill, pixel by pixel</span></button>
-      <button class="card" data-view="xf"><span class="badge">2D</span><span class="title">2D Transformations</span><span class="desc">Translate, rotate, scale, shear, reflect — editable points</span></button>
-      <button class="card" data-view="d3"><span class="badge">3D</span><span class="title">3D Transform &amp; Projection</span><span class="desc">4&times;4 matrices, orthographic / isometric / oblique</span></button>
-      <button class="card" data-view="paint"><span class="badge">PT</span><span class="title">Mini Paint Editor</span><span class="desc">Freeform drawing with every primitive, hand-rasterized</span></button>
-    </div>
+    <div class="grid" id="grid"></div>
+    <p class="nomatch" id="noMatch" hidden></p>
   </section>
+
+  <div class="toolhead" id="toolhead" hidden>
+    <h2 id="toolName"></h2>
+    <p id="toolDesc"></p>
+  </div>
 
   <!-- 1. PAINT -->
   <section id="paint" hidden>
@@ -127,6 +148,18 @@
     </div>
   </section>
 </main>
+</div>
+
+<dialog id="guide">
+  <h2>Toolkit guide</h2>
+  <ul>
+    <li>Pick a topic from the grid or the topic index on the left.</li>
+    <li>In a visualizer, use Step or Play to watch the algorithm draw one pixel at a time. The table shows the values behind every step.</li>
+    <li>Theory and numbered steps sit below each visualizer.</li>
+    <li>Press <kbd>Ctrl</kbd> + <kbd>K</kbd> (or <kbd>&#8984;</kbd> + <kbd>K</kbd>) to search, then Enter to open the first match.</li>
+  </ul>
+  <button id="guideClose" type="button">Close</button>
+</dialog>
 <script src="app.js"></script>
 </body>
 </html>
