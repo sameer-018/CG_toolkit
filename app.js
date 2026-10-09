@@ -147,7 +147,7 @@ function vDraw() {
   const sum = $('#vsum'), tb = $('#vt');
   if (m === 'compare') {
     const sa = new Set(V.a.map(String)), sb = new Set(V.b.map(String));
-    V.a.forEach(([x, y]) => { const [px, py] = cellXY(x, y); c.fillStyle = '#3b82f6'; c.fillRect(px + 1, py + 1, cs / 2 - 1, cs - 1); });
+    V.a.forEach(([x, y]) => { const [px, py] = cellXY(x, y); c.fillStyle = '#2E6F40'; c.fillRect(px + 1, py + 1, cs / 2 - 1, cs - 1); });
     V.b.forEach(([x, y]) => { const [px, py] = cellXY(x, y); c.fillStyle = '#ef4444'; c.fillRect(px + cs / 2, py + 1, cs / 2, cs - 1); });
     const diff = [...sa].filter(k => !sb.has(k)).length + [...sb].filter(k => !sa.has(k)).length;
     sum.textContent = `Blue = DDA (${sa.size} px), Red = Bresenham (${sb.size} px). Pixels that differ: ${diff}.`; tb.innerHTML = ''; return;
@@ -210,7 +210,7 @@ function fDraw() {
   for (let i = 0; i <= F.cols; i++) { c.moveTo(i * cs + .5, 0); c.lineTo(i * cs + .5, H); }
   for (let j = 0; j <= F.rows; j++) { c.moveTo(0, j * cs + .5); c.lineTo(W, j * cs + .5); } c.stroke();
   F.map.forEach((tag, key) => { const [x, y] = key.split(',').map(Number); const px = x * cs, py = y * cs;
-    if (tag === 'wall') { c.fillStyle = '#1f2937'; c.fillRect(px, py, cs, cs); c.strokeStyle = '#111827'; c.lineWidth = 2; c.strokeRect(px + 1, py + 1, cs - 2, cs - 2); }
+    if (tag === 'wall') { c.fillStyle = '#253D2C'; c.fillRect(px, py, cs, cs); c.strokeStyle = '#16261B'; c.lineWidth = 2; c.strokeRect(px + 1, py + 1, cs - 2, cs - 2); }
     else { c.fillStyle = '#f59e0b'; c.fillRect(px + 1, py + 1, cs - 1, cs - 1); } });
   for (let s = 0; s <= F.i; s++) { const p = F.steps[s]; c.fillStyle = s === F.i ? '#ef4444' : acc; c.globalAlpha = s === F.i ? 1 : .8; c.fillRect(p.x * cs + 1, p.y * cs + 1, cs - 1, cs - 1); }
   c.globalAlpha = 1;
@@ -362,10 +362,10 @@ function axisLabels(ctx, originX, originY, right, top, text) {
   ctx.fillText('X', right - 14, originY - 6); ctx.fillText('Y', originX + 6, top + 12); ctx.restore();
 }
 function tDraw() {
-  T.clear(); const ax = pack('#c8c8c2'); lineBres(0, OY, T.W - 1, OY, (x, y) => T.set(x, y, ax)); lineBres(OX, 0, OX, T.H - 1, (x, y) => T.set(x, y, ax));
+  T.clear(); const ax = pack('#A6D8B5'); lineBres(0, OY, T.W - 1, OY, (x, y) => T.set(x, y, ax)); lineBres(OX, 0, OX, T.H - 1, (x, y) => T.set(x, y, ax));
   const M = tMatrix(), src = X.pts;
   const out = src.map(([x, y]) => [M[0][0] * x + M[0][1] * y + M[0][2], M[1][0] * x + M[1][1] * y + M[1][2]]);
-  tPoly(src, pack('#9a9a93')); tPoly(out, pack('#2b59ff'));
+  tPoly(src, pack('#68BA7F')); tPoly(out, pack('#2E6F40'));
   const [a, b] = sw(...X.pivot), red = pack('#ef4444'); for (let i = -6; i <= 6; i++) { T.set(a + i, b, red); T.set(a, b + i, red); } T.show();
   axisLabels(T.ctx, OX, OY, T.W, 0);
   CTRL.forEach(([id]) => $('#o_' + id).textContent = $('#' + id).value);
@@ -432,7 +432,7 @@ function d3Matrix() { const g = id => +$('#' + id).value;
 }
 function d3Draw() {
   D.clear();
-  const grayAxis = pack('#c8c8c2');
+  const grayAxis = pack('#A6D8B5');
   const d3axes = [[[-3,0,0],[3,0,0],'X'], [[0,-2,0],[0,2,0],'Y'], [[0,0,-3],[0,0,3],'Z']];
   d3axes.forEach(([a, b]) => {
     const [x0,y0] = d3sw(...project(a, $('#d3proj').value)), [x1,y1] = d3sw(...project(b, $('#d3proj').value));
@@ -440,7 +440,7 @@ function d3Draw() {
   });
   const M = d3Matrix(), mesh = MESH[$('#d3shape').value];
   const world = mesh.v.map(p => project(apply4(M, p), $('#d3proj').value));
-  const col = pack('#2b59ff');
+  const col = pack('#2E6F40');
   mesh.e.forEach(([i, j]) => { const [x0, y0] = d3sw(...world[i]), [x1, y1] = d3sw(...world[j]); lineBres(x0, y0, x1, y1, (x, y) => D.set(x, y, col)); });
   world.forEach(p => { const [x, y] = d3sw(...p); for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) D.set(x + i, y + j, col); });
   D.show();
