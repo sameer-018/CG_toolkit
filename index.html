@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Interactive Graphics Learning Toolkit</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="hgroup">
+    <button id="backBtn" class="back" hidden>&larr; All tools</button>
+    <span class="brand" id="toolTitle">Interactive Graphics Learning Toolkit</span>
+  </div>
+</header>
+
+<main>
+  <!-- 0. HOME -->
+  <section id="home">
+    <div class="hero">
+      <span class="kicker">Computer Graphics &middot; Course Project</span>
+      <h1>Interactive Graphics<br>Learning Toolkit</h1>
+      <p class="lede">Pick a topic below. Every drawing on every page is rasterized pixel by pixel — nothing here uses the canvas's built-in shape tools.</p>
+    </div>
+    <div class="grid">
+      <button class="card" data-view="viz" data-mode="dda"><span class="badge">DDA</span><span class="title">DDA Line</span><span class="desc">Digital Differential Analyzer, step by step</span></button>
+      <button class="card" data-view="viz" data-mode="bres"><span class="badge">BR</span><span class="title">Bresenham Line</span><span class="desc">Integer-only line drawing, step by step</span></button>
+      <button class="card" data-view="viz" data-mode="compare"><span class="badge">VS</span><span class="title">DDA vs Bresenham</span><span class="desc">Same line, both algorithms, pixel-for-pixel</span></button>
+      <button class="card" data-view="viz" data-mode="circle"><span class="badge">MC</span><span class="title">Midpoint Circle</span><span class="desc">8-way symmetry, one octant computed</span></button>
+      <button class="card" data-view="viz" data-mode="fill"><span class="badge">FL</span><span class="title">Area Fill</span><span class="desc">Flood fill vs boundary fill, pixel by pixel</span></button>
+      <button class="card" data-view="xf"><span class="badge">2D</span><span class="title">2D Transformations</span><span class="desc">Translate, rotate, scale, shear, reflect — editable points</span></button>
+      <button class="card" data-view="d3"><span class="badge">3D</span><span class="title">3D Transform &amp; Projection</span><span class="desc">4&times;4 matrices, orthographic / isometric / oblique</span></button>
+      <button class="card" data-view="paint"><span class="badge">PT</span><span class="title">Mini Paint Editor</span><span class="desc">Freeform drawing with every primitive, hand-rasterized</span></button>
+    </div>
+  </section>
+
+  <!-- 1. PAINT -->
+  <section id="paint" hidden>
+    <div class="bar" id="tools"></div>
+    <div class="bar">
+      <label>Color <input type="color" id="col" value="#d62828"></label>
+      <label>Size <input type="range" id="size" min="1" max="12" value="1"><span id="sv">1</span></label>
+      <label>Line algo <select id="algo"><option value="bres">Bresenham</option><option value="dda">DDA</option></select></label>
+      <button id="undo">Undo</button><button id="clear">Clear</button><button id="save">Save PNG</button>
+    </div>
+    <canvas id="c" class="fb"></canvas>
+    <div class="info" id="info">x: -, y: -</div>
+  </section>
+
+  <!-- 2. ALGORITHM VISUALIZER -->
+  <section id="viz" hidden>
+    <input type="hidden" id="vmode" value="bres">
+    <div class="bar">
+      <span id="lineInputs" class="coord-row">
+        <label>x0 <input type="number" id="vx0" value="2"></label>
+        <label>y0 <input type="number" id="vy0" value="2"></label>
+        <label>x1 <input type="number" id="vx1" value="10"></label>
+        <label>y1 <input type="number" id="vy1" value="6"></label>
+        <label>r <input type="number" id="vr" value="5" min="1" max="8"></label>
+      </span>
+    </div>
+    <div class="bar" id="vLineTuts">
+      <button id="vline">Tutorial 2: line (2,2)→(10,6)</button>
+      <button id="vcirc">Tutorial 2: circle r=5 at (0,0)</button>
+      <button id="vstep">Step</button><button id="vplay">Play</button>
+      <button id="vall">Show all</button><button id="vreset">Reset</button>
+    </div>
+    <div class="bar" id="fillBar" hidden>
+      <label>Boundary <select id="fpreset">
+        <option value="rect_obstacle" selected>Rectangle + obstacle (shows the difference)</option>
+        <option value="lshape">L-shape + obstacle (shows the difference)</option>
+        <option value="rect">Plain rectangle (no difference — see why below)</option></select></label>
+      <label>Fill type <select id="ftype"><option value="flood">Flood fill</option><option value="boundary">Boundary fill</option></select></label>
+      <button id="fstep">Step</button><button id="fplay">Play</button>
+      <button id="fall">Show all</button><button id="freset">Reset</button>
+    </div>
+    <div class="split">
+      <canvas id="vc"></canvas>
+      <div class="side"><div class="info" id="vsum"></div><div class="tbl"><table id="vt"></table></div></div>
+    </div>
+    <div class="theory">
+      <h3 id="theoryTitle"></h3>
+      <p id="theoryText"></p>
+      <ol id="theorySteps"></ol>
+    </div>
+  </section>
+
+  <!-- 3. TRANSFORM LAB -->
+  <section id="xf" hidden>
+    <div class="bar">
+      <label>Shape <select id="shape"><option value="tri">Triangle (1,2) (3,5) (5,1)</option><option value="sq">Square (0,0) (2,2)</option><option value="custom">Custom</option></select></label>
+      <button id="ptx">Tutorial 3: translate (2,3)</button>
+      <button id="prot">Tutorial 3: rotate square 90°</button>
+      <button id="xreset">Reset</button>
+    </div>
+    <div class="split">
+      <div>
+        <canvas id="tc" class="fb"></canvas>
+        <div class="info">Click the canvas to set the pivot <span class="dot red"></span>, or drag a gray vertex to edit its coordinates.</div>
+      </div>
+      <div class="side">
+        <div class="side-head"><span>Coordinates</span><span class="muted">x, y</span></div>
+        <div id="pts" class="pts"></div>
+        <button id="ptadd" class="ghost">+ Add point</button>
+        <div class="hr"></div>
+        <div id="sliders"></div><div id="flips" class="bar"></div>
+        <pre id="mat"></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 3D TRANSFORM & PROJECTION -->
+  <section id="d3" hidden>
+    <div class="bar">
+      <label>Shape <select id="d3shape"><option value="cube">Cube</option><option value="pyramid">Pyramid</option></select></label>
+      <label>Projection <select id="d3proj"><option value="ortho">Orthographic</option><option value="iso">Isometric</option><option value="oblique">Oblique (cavalier)</option></select></label>
+      <button id="d3tut">Tutorial 4: rotate (1,0,0) about Z by 90°</button>
+      <button id="d3reset">Reset</button>
+    </div>
+    <div class="split">
+      <canvas id="d3c" class="fb"></canvas>
+      <div class="side">
+        <div id="d3sliders"></div>
+        <pre id="d3mat"></pre>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
