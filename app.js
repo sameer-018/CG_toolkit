@@ -63,22 +63,132 @@ function floodFill(R, sx, sy, c) { // scanline flood fill, 4-connected
   }
 }
 
-/* ===== Views: a home grid of cards, each opening one tool ===== */
-const VIEWS = ['home', 'paint', 'viz', 'xf', 'd3'];
-const VIEW_TITLE = { home: 'Interactive Graphics Learning Toolkit', paint: 'Mini Paint Editor', viz: 'Algorithm Visualizer', xf: '2D Transform Lab', d3: '3D Transform & Projection' };
-function showView(id) {
-  VIEWS.forEach(v => $('#' + v).hidden = v !== id);
-  $('#backBtn').hidden = id === 'home';
-  $('#toolTitle').textContent = VIEW_TITLE[id];
+/* ===== App shell: topics, cards, sidebar index, filters, search ===== */
+const TOPICS = [
+  { id: 'dda', code: 'DDA', name: 'DDA Line', view: 'viz', mode: 'dda', cat: 'line', tag: 'Line drawing', cta: 'Open in playground', desc: 'Digital Differential Analyzer, step by step' },
+  { id: 'bres', code: 'BR', name: 'Bresenham Line', view: 'viz', mode: 'bres', cat: 'line', tag: 'Line drawing', cta: 'Open in playground', desc: 'Integer-only line drawing, step by step' },
+  { id: 'compare', code: 'VS', name: 'DDA vs Bresenham', view: 'viz', mode: 'compare', cat: 'line', tag: 'Comparison', cta: 'Open in playground', desc: 'Same line, both algorithms, pixel-for-pixel' },
+  { id: 'circle', code: 'MC', name: 'Midpoint Circle', view: 'viz', mode: 'circle', cat: 'raster', tag: 'Rasterization', cta: 'Open in playground', desc: '8-way symmetry, one octant computed' },
+  { id: 'fill', code: 'FL', name: 'Area Fill', view: 'viz', mode: 'fill', cat: 'raster', tag: 'Region filling', cta: 'Open in playground', desc: 'Flood fill vs boundary fill, pixel by pixel' },
+  { id: 'xf', code: '2D', name: '2D Transformations', view: 'xf', cat: 'geo', tag: 'Geometry', cta: 'Open in lab', desc: 'Translate, rotate, scale, shear and reflect, with editable points' },
+  { id: 'd3', code: '3D', name: '3D Transform & Projection', view: 'd3', cat: 'geo', tag: 'Projection', cta: 'Open in lab', desc: '4×4 matrices with orthographic, isometric and oblique views' },
+  { id: 'paint', code: 'PT', name: 'Mini Paint Editor', view: 'paint', cat: 'raster', tag: 'Sandbox', cta: 'Open editor', desc: 'Freeform drawing with every primitive, hand-rasterized' }
+];
+const CATS = [['all', 'All topics'], ['line', 'Line drawing'], ['raster', 'Rasterization'], ['geo', 'Geometry']];
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"/></svg>';
+
+/* card thumbnails: 12x9 pixel grids drawn with the same algorithms the toolkit teaches */
+function thumbPixels(kind) {
+  const m = new Map(), put = (x, y, c) => { if (x >= 0 && x < 12 && y >= 0 && y < 9) m.set(x + ',' + y, c); };
+  const L = (a, b, c, d, cls) => lineBres(a, b, c, d, (x, y) => put(x, y, cls));
+  if (kind === 'dda') lineDDA(1, 7, 10, 1, (x, y) => put(x, y, 'd'));
+  else if (kind === 'bres') lineBres(1, 7, 10, 1, (x, y) => put(x, y, 'd'));
+  else if (kind === 'compare') {
+    const a = new Set(), b = new Set();
+    lineDDA(1, 7, 9, 2, (x, y) => a.add(x + ',' + y)); lineBres(1, 7, 9, 2, (x, y) => b.add(x + ',' + y));
+    const xy = k => k.split(',').map(Number);
+    a.forEach(k => put(...xy(k), b.has(k) ? 'd' : 'm'));
+    b.forEach(k => { if (!a.has(k)) put(...xy(k), 'l'); });
+  } else if (kind === 'circle') circle(6, 4, 3, (x, y) => put(x, y, 'd'));
+  else if (kind === 'fill') {
+    [[2, 1, 9, 1], [9, 1, 9, 5], [9, 5, 6, 5], [6, 5, 6, 7], [6, 7, 2, 7], [2, 7, 2, 1]].forEach(s => L(...s, 'd'));
+    for (let y = 2; y <= 4; y++) for (let x = 3; x <= 8; x++) put(x, y, 'm');
+    for (let y = 5; y <= 6; y++) for (let x = 3; x <= 5; x++) put(x, y, 'm');
+  } else if (kind === 'xf') {
+    for (let y = 5; y <= 7; y++) for (let x = 1; x <= 4; x++) put(x, y, 'l');
+    for (let y = 1; y <= 3; y++) for (let x = 6; x <= 9; x++) put(x, y, 'd');
+  } else if (kind === 'd3') {
+    [[4, 1, 8, 1], [8, 1, 8, 5], [8, 5, 4, 5], [4, 5, 4, 1]].forEach(s => L(...s, 'l'));
+    [[2, 3, 4, 1], [6, 3, 8, 1], [6, 7, 8, 5], [2, 7, 4, 5]].forEach(s => L(...s, 'm'));
+    [[2, 3, 6, 3], [6, 3, 6, 7], [6, 7, 2, 7], [2, 7, 2, 3]].forEach(s => L(...s, 'd'));
+  } else if (kind === 'paint') {
+    [[1, 6, 3, 3], [3, 3, 5, 6], [5, 6, 7, 3], [7, 3, 9, 6]].forEach(s => L(...s, 'd')); L(2, 8, 10, 8, 'm');
+  }
+  return [...m].map(([k, c]) => { const [x, y] = k.split(',').map(Number); return { x, y, c }; });
 }
-$('#backBtn').onclick = () => showView('home');
-document.querySelectorAll('.card').forEach(c => c.onclick = () => {
-  showView(c.dataset.view);
-  if (c.dataset.view === 'viz') { $('#vmode').value = c.dataset.mode || 'bres'; vmodeChanged(); }
-  else if (c.dataset.view === 'xf') tDraw();
-  else if (c.dataset.view === 'd3') d3Draw();
-  else if (c.dataset.view === 'paint') P.show();
+function thumbSVG(kind) {
+  const px = thumbPixels(kind), step = Math.min(1, 14 / px.length);
+  let g = ''; for (let i = 1; i < 12; i++) g += `M${i * 8} 0V72`; for (let j = 1; j < 9; j++) g += `M0 ${j * 8}H96`;
+  return `<svg viewBox="0 0 96 72" aria-hidden="true"><path class="gl" d="${g}"/>` +
+    px.map((p, i) => `<rect class="px ${p.c}" style="--i:${(i * step).toFixed(2)}" x="${p.x * 8 + .5}" y="${p.y * 8 + .5}" width="7" height="7"/>`).join('') + '</svg>';
+}
+
+/* build cards, sidebar index and filter chips from the one TOPICS list */
+const cards = [], idxBtns = {};
+TOPICS.forEach((t, i) => {
+  const card = document.createElement('button'); card.type = 'button'; card.className = 'card'; card._t = t;
+  card.innerHTML = `<span class="card-top"><span class="card-meta"><span class="code">${esc(t.code)}</span><span class="tag">${esc(t.tag)}</span></span><span class="thumb">${thumbSVG(t.id)}</span></span>` +
+    `<span class="title">${esc(t.name)}</span><span class="desc">${esc(t.desc)}</span>` +
+    `<span class="cta"><span class="cta-text"><span class="t1">Explore topic</span><span class="t2">${esc(t.cta)}</span></span>${ARROW}</span>`;
+  const ib = document.createElement('button'); ib.type = 'button'; ib.className = 'idx';
+  ib.innerHTML = `<span class="n">${String(i + 1).padStart(2, '0')}</span><span>${esc(t.name)}</span>`;
+  card.onclick = ib.onclick = () => openTopic(t);
+  card.onmouseenter = card.onfocus = () => ib.classList.add('hl'); card.onmouseleave = card.onblur = () => ib.classList.remove('hl');
+  ib.onmouseenter = () => card.classList.add('hl'); ib.onmouseleave = () => card.classList.remove('hl');
+  $('#grid').appendChild(card); $('#topicIndex').appendChild(ib); cards.push(card); idxBtns[t.id] = ib;
 });
+let cat = 'all', q = '', current = null;
+CATS.forEach(([id, label]) => {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = label; b.dataset.cat = id;
+  b.setAttribute('aria-pressed', id === 'all'); b.onclick = () => { cat = id; applyFilters(true); }; $('#chips').appendChild(b);
+});
+function applyFilters(restart) {
+  let n = 0;
+  document.querySelectorAll('.chip').forEach(b => b.setAttribute('aria-pressed', b.dataset.cat === cat));
+  cards.forEach(c => {
+    const t = c._t, ok = (cat === 'all' || t.cat === cat) && (!q || (t.name + ' ' + t.tag + ' ' + t.desc + ' ' + t.code).toLowerCase().includes(q));
+    c.hidden = !ok;
+    if (ok) { c.style.setProperty('--n', n++); if (restart) { c.style.animation = 'none'; void c.offsetWidth; c.style.animation = ''; } }
+  });
+  $('#count').textContent = String(n).padStart(2, '0') + (n === 1 ? ' topic' : ' topics') + ' to explore';
+  $('#noMatch').hidden = n > 0; if (!n) $('#noMatch').textContent = `No topics match "${q}". Try "line", "circle" or "fill".`;
+}
+
+/* views, breadcrumb and active states */
+const VIEWS = ['home', 'paint', 'viz', 'xf', 'd3'];
+function renderCrumbs(t) {
+  const c = $('#crumbs'); c.innerHTML = '';
+  const add = (txt, cls, fn) => { const e = document.createElement(fn ? 'button' : 'span'); e.textContent = txt; e.className = cls; if (fn) { e.type = 'button'; e.onclick = fn; } c.appendChild(e); };
+  const sep = () => { const s = document.createElement('span'); s.className = 'sep'; c.appendChild(s); };
+  add('Workspace', 'crumb-link', () => showView('home')); sep();
+  if (!t) add('Explore topics', 'here'); else { add('Explore topics', 'crumb-link', () => showView('home')); sep(); add(t.name, 'here'); }
+}
+function setActive() {
+  const t = TOPICS.find(x => x.id === current);
+  $('#navHome').classList.toggle('active', !t);
+  $('#navPlay').classList.toggle('active', !!t && t.view === 'viz' && t.id !== 'compare');
+  $('#navCompare').classList.toggle('active', !!t && t.id === 'compare');
+  Object.entries(idxBtns).forEach(([id, b]) => b.classList.toggle('active', id === current));
+}
+function showView(id, t) {
+  VIEWS.forEach(v => $('#' + v).hidden = v !== id);
+  $('#toolhead').hidden = id === 'home';
+  if (t) { $('#toolName').textContent = t.name; $('#toolDesc').textContent = t.desc; }
+  current = t ? t.id : null; renderCrumbs(t); setActive();
+}
+function openTopic(t) {
+  showView(t.view, t);
+  if (t.view === 'viz') { $('#vmode').value = t.mode; vmodeChanged(); }
+  else if (t.view === 'xf') tDraw(); else if (t.view === 'd3') d3Draw(); else if (t.view === 'paint') P.show();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+$('#navHome').onclick = () => { showView('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+$('#navPlay').onclick = () => openTopic(TOPICS.find(t => t.id === (current && TOPICS.find(x => x.id === current).view === 'viz' && current !== 'compare' ? current : 'bres')));
+$('#navCompare').onclick = () => openTopic(TOPICS.find(t => t.id === 'compare'));
+
+/* search (Ctrl/Cmd + K), guide dialog */
+if (/Mac|iPhone|iPad/.test(navigator.platform)) $('#kbd').textContent = '⌘K';
+$('#search').addEventListener('input', e => { q = e.target.value.trim().toLowerCase(); if ($('#home').hidden) showView('home'); applyFilters(false); });
+$('#search').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && q) { const first = cards.find(c => !c.hidden); if (first) { first.click(); e.target.blur(); } }
+  if (e.key === 'Escape') { e.target.value = ''; q = ''; applyFilters(false); e.target.blur(); }
+});
+addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('#search').focus(); $('#search').select(); } });
+$('#guideBtn').onclick = () => $('#guide').showModal();
+$('#guideClose').onclick = () => $('#guide').close();
+$('#guide').addEventListener('click', e => { if (e.target === $('#guide')) $('#guide').close(); });
+renderCrumbs(null); setActive(); applyFilters(false);
 
 /* ===== 1. Paint ===== */
 const P = new Raster($('#c'), 640, 400);
@@ -311,7 +421,7 @@ function renderTheory(mode) {
 /* ---- mode switch between line/circle/compare and fill, sharing the same canvas + side panel ---- */
 function vmodeChanged() {
   const isFill = $('#vmode').value === 'fill';
-  $('#lineInputs').hidden = isFill; $('#vLineTuts').hidden = isFill; $('#fillBar').hidden = !isFill;
+  $('#lineInputs').parentElement.hidden = isFill; $('#vLineTuts').hidden = isFill; $('#fillBar').hidden = !isFill;
   V.mode = $('#vmode').value;
   renderTheory(V.mode);
   isFill ? fReset() : vRun();
